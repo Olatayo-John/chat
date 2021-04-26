@@ -1,0 +1,23 @@
+body{
+	/* background:#E0E0E0; */
+	background:#f5f5f5 !important;
+}
+h4{
+	text-transform: uppercase;
+	margin-bottom: 40px;
+	padding: 10px;
+	border-bottom: 1px solid #333;
+	font-weight: bolder;
+	text-align: center;
+}
+h3{
+	text-transform: uppercase;
+}
+label{
+	font-weight: bolder;
+	color: #333;
+}
+.chats,.messages,.no_friend{
+	background:#333;
+	color:white;
+}
