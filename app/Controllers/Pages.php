@@ -95,47 +95,41 @@ class Pages extends BaseController
 			'fname' => [
 				'rules' => 'trim|required',
 				'errors' => [
-					'required' => 'Your First name is required'
+					'required' => 'First name is required'
 				]
 			],
 			'lname' => [
 				'rules' => 'trim|required',
 				'errors' => [
-					'required' => 'Your Last name is required'
+					'required' => 'Last name is required'
 				]
 			],
 			'gender' => [
 				'rules' => 'trim|required',
 				'errors' => [
-					'required' => 'Your gender is required'
+					'required' => 'Gender is required'
 				]
 			],
 			'email' => [
 				'rules' => 'trim|valid_email|required|is_unique[users.email]',
 				'errors' => [
-					'required' => 'Your email is required',
+					'required' => 'Email is required',
 					'valid_email' => 'Please provide a valid email address',
-					'is_unique' => '{field} "{value}" already exist',
+					'is_unique' => 'Email "{value}" already exist',
 				]
 			],
 			'pwd' => [
-				'rules' => 'trim|required',
+				'rules' => 'trim|required|min_length[5]',
 				'errors' => [
-					'required' => 'Please pick a password'
+					'required' => 'Please pick a password',
+					'min_length' => 'Password must be over {param} characters'
 				]
 			],
 		];
 
-		if (!$this->validate($rules)) {
-			$data['title'] = "register";
-
-			echo view('templates/header', $data);
-			echo view('register');
-		} else if ($_SERVER['REQUEST_METHOD'] === 'POST' && $this->validate($rules)) {
-			print_r($_POST);
-			die;
+		if ($_SERVER['REQUEST_METHOD'] === 'POST' && $this->validate($rules)) {
 			$rand = mt_rand(0, 10000000000);
-			$fname = str_replace(" ", "_", strtolower(htmlentities($this->input->post("fname"))));
+			$fname = str_replace(" ", "_", strtolower(htmlentities($_POST["fname"])));
 
 			if ($_FILES['p_image']['name']) {
 				$config['upload_path'] = './assets/images';
@@ -151,7 +145,7 @@ class Pages extends BaseController
 					foreach ($upload_error as $error) {
 						$this->session->setFlashdata('invalid', $error);
 					}
-					return redirect($_SERVER['HTTP_REFERER']);
+					return redirect('register');
 				} else {
 					$uploaded = $_FILES['p_image']['name'];
 					$uploaded_ext = htmlentities(strtolower(pathinfo($uploaded, PATHINFO_EXTENSION)));
@@ -159,7 +153,8 @@ class Pages extends BaseController
 					$p_image = $rand . "_" . $fname . "." . $uploaded_ext;
 				}
 			} else {
-				$gender = htmlentities($this->input->post('gender'));
+				$gender = htmlentities($_POST['gender']);
+
 				if ($gender === 'male') {
 					$p_image = "male.png";
 				} else if ($gender === 'female') {
@@ -167,28 +162,33 @@ class Pages extends BaseController
 				}
 			}
 
-			$name = htmlentities($this->input->post('fname'));
-			$email = htmlentities($this->input->post('email'));
+			$name = htmlentities($_POST['fname']);
+			$email = htmlentities($_POST['email']);
 			$v_code = mt_rand(0, 999999);
 			$unique_id = $rand;
 			$link = base_url('emailverify/' . $unique_id);
 
-			$res = $this->send_vcode($name, $email, $v_code, $link);
+			// $res = $this->send_vcode($name, $email, $v_code, $link);
+			$res = true;
 			if ($res !== true) {
-				$this->session->setFlashdata('invalid', $res);
+				$this->session->setFlashdata('invalid', "Error sending mail. Please try again");
 				return redirect('register');
 			} else {
-				// $this->load->model('Pages_mdl');
-				// $res = $this->Pages_mdl->register($unique_id, $v_code, $p_image);
-				$res = false;
+				$Pages_mdl = new Pages_mdl();
+				$res = $Pages_mdl->register($unique_id, $v_code, $p_image);
 				if ($res !== true) {
-					$this->session->setFlashdata('invalid', 'Error creating your account.Please try again!');
+					$this->session->setFlashdata('invalid', 'Error creating your account. Please try again!');
 					return redirect('register');
 				} else {
 					$this->session->setFlashdata('valid', 'Verification code has been sent to your registered email address!');
-					return redirect('emailverify/' . $unique_id);
+					return redirect()->to('emailverify/' . $unique_id);
 				}
 			}
+		} else {
+			$data['title'] = "register";
+
+			echo view('templates/header', $data);
+			echo view('register');
 		}
 	}
 
@@ -224,17 +224,16 @@ class Pages extends BaseController
 			}
 
 			$rules = [
-				'vcode' => 'required|trim'
+				'vcode' => [
+					'rules' => 'required|trim|is_numeric',
+					'errors' => [
+						'required' => 'Please enter verification code',
+						'is_numeric' => 'Invalid code format'
+					]
+				]
 			];
 
-			if (!$this->validate($rules)) {
-				$data['key'] = $unique_id;
-				$data['title'] = 'verification';
-
-				// $this->session->setFlashdata('invalid', 'Invalid code');
-				echo view('templates/header', $data);
-				echo view('templates/emailverify', $data);
-			} else {
+			if ($_SERVER['REQUEST_METHOD'] === 'POST' && $this->validate($rules)) {
 				$res = $Pages_mdl->emailverify($unique_id);
 				if ($res !== true) {
 					$this->session->setFlashdata('invalid', 'Invalid code');
@@ -243,6 +242,12 @@ class Pages extends BaseController
 					$this->session->setFlashdata('valid', 'Your account has been verified!');
 					return redirect('login');
 				}
+			} else {
+				$data['key'] = $unique_id;
+				$data['title'] = 'verification';
+
+				echo view('templates/header', $data);
+				echo view('templates/emailverify', $data);
 			}
 		}
 	}

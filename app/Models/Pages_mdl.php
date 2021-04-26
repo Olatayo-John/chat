@@ -49,19 +49,19 @@ class Pages_mdl extends Model
     {
         $data = array(
             'unique_id' => $unique_id,
-            'fname' => htmlentities($this->input->post('fname')),
-            'lname' => htmlentities($this->input->post('lname')),
-            'gender' => htmlentities($this->input->post('gender')),
-            'email' => htmlentities($this->input->post('email')),
+            'fname' => htmlentities($_POST['fname']),
+            'lname' => htmlentities($_POST['lname']),
+            'gender' => htmlentities($_POST['gender']),
+            'email' => htmlentities($_POST['email']),
             'about' => '',
             'v_code' => password_hash($v_code, PASSWORD_DEFAULT),
-            'pwd' => password_hash($this->input->post('pwd'), PASSWORD_DEFAULT),
+            'pwd' => password_hash($_POST['pwd'], PASSWORD_DEFAULT),
             'p_image' => $p_image,
             'status' => '0',
             'acct_status' => '0',
             'created_at' => date(DATE_COOKIE),
         );
-        $this->insert('users', $data);
+        $this->insert($data);
         return true;
         exit;
     }

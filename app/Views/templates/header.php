@@ -4,6 +4,7 @@
 $this->session = session();
 $this->uri = service('uri');
 $this->validator = service('validation');
+$errors = $this->validator->getErrors();
 ?>
 
 <head>
@@ -93,7 +94,6 @@ $this->validator = service('validation');
         <?php endif; ?>
 
         <!-- form error -->
-        <?php $errors = $this->validator->getErrors();  ?>
         <?php if (count($errors) > 0) : ?>
             <div class="alert invalid">
                 <?php foreach ($errors as $error) : ?>
